@@ -5,6 +5,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+hospital_info_dict = {}
+hospitals_list = []
 # driver = Chrome()
 URL = "https://hospitalpricingfiles.org/"
 
@@ -14,38 +16,11 @@ def get_data(url):
  
 	driver = Chrome(options=browser_options)
 	driver.get(url)
-	# element = driver.find_element(By.LINK_TEXT, "here")
-
-	# print(element.text)
-	# elements = driver.find_elements(By.CLASS_NAME, "us-state-map")
 	
-	# # Collect and print link texts and hrefs
-	# links = []
-	# for element in elements:
-	# 		link_text = element.text
-	# 		link_href = element.get_attribute("href")
-	# 		links.append((link_text, link_href))
-	# 		print(f"Text: {link_text}, URL: {link_href}")
-   
   # Wait until the iframe is present and switch to it
 	wait = WebDriverWait(driver, 10)
  
-	# Locate a specific div by its class name
-	# map_div = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "us-state-map")))
-
-	# # Interact with elements inside the div
-	# elements = map_div.find_elements(By.TAG_NAME, "title")
-
-	# # Collect and print link texts and hrefs
-	# links = []
-	# for element in elements:
-	# 		link_text = element.text
-	# 		link_href = element.get_attribute("href")
-	# 		links.append((link_text, link_href))
-	# 		print(f"Text: {link_text}, URL: {link_href}")
- 
-	# # Locate and click on the state with class name 'AK state'
-	# state_element = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'AK state')))
+	# Locate and click on the state with class name 'AK state'
 	us_state_map = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'us-state-map')))
 
 	# Find the outlines element within the us-state-map
@@ -54,36 +29,60 @@ def get_data(url):
 	# Find all child elements within outlines and get their class names
 	states = outlines.find_elements(By.XPATH, './*')
 	state_classes = [state.get_attribute('class') for state in states]
-
-	for state_class in state_classes:
-			print(state_class)
+	# for state_class in state_classes:
+	# 		print(state_class)
   
   # Find all child elements within outlines
 	states = outlines.find_elements(By.XPATH, './*')
-
+	# print(states)
 	state_texts = {}
 
 	for state in states:
 			state_class = state.get_attribute('class')
-			print(state_class)
+			if state_class == 'UT state':
+					print(state)
+					utah_state = state
         
   # state_class = state_class.get_attribute('class')
   
   # Click on the state element
-	state.click()
+	utah_state.click()
  
  	# Wait for 10 seconds
 	time.sleep(3)
   
-	wait = WebDriverWait(driver, 10)
 	# Wait until the new page content is loaded
 	wait.until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
 
-	# Extract all text from the resulting page
-	body_text = driver.find_element(By.TAG_NAME, 'body').text
-	state_texts[state_class] = body_text
-	print(f"Text for {state_class}: {body_text}")
- 
+	# Locate the parent element with the specified class
+	parent_elements = driver.find_elements(By.CLASS_NAME, 'search-result-item-wrapper.mobile-search-result-card-style')
+	
+	for parent in parent_elements:
+			# Find all child elements within the parent element with the specified class
+			hospital_elements = parent.find_elements(By.CLASS_NAME, 'name-hospital-search-result-wrapper')
+			hospital_address_elements = parent.find_elements(By.CLASS_NAME, 'address-hospital-search-result-wrap')
+			hospital_other_elements = parent.find_elements(By.CLASS_NAME, 'phone-website-ccn-search-result-wrap') #'ccn-number-search-result')
+
+			print('=========================================')
+     	# Extract text and store in the dictionary
+			hospital_info_dict['name'] = hospital_elements[0].text
+			hospital_info_dict['address'] = hospital_address_elements[0].text
+			for other_element in hospital_other_elements:
+					hospital_ccn_elements = other_element.find_elements(By.CLASS_NAME, 'ccn-number')
+					hospital_phone_elements = other_element.find_elements(By.CLASS_NAME, 'phone-number')
+					hospital_website_elements = other_element.find_elements(By.CLASS_NAME, 'website-search-result')
+					if hospital_ccn_elements:
+						hospital_info_dict['ccn'] = hospital_ccn_elements[0].text
+					hospital_info_dict['phone_no'] = hospital_phone_elements[0].text
+					hospital_info_dict['website'] = hospital_website_elements[0].get_attribute('href')
+     
+			# print(f"Hospital Name: {hospital_info_dict['name']}")
+			# print(f"Hospital Address: {hospital_info_dict['address']}")
+			# print(f"Hospital CCN: {hospital_info_dict['ccn']}")
+			# print(f"Hospital Phone Number: {hospital_info_dict['phone_no']}")
+			# print(f"Hospital Website: {hospital_info_dict['website']}")
+			hospitals_list.append(hospital_info_dict)
+	print(hospitals_list)
 	driver.quit()
 
 
