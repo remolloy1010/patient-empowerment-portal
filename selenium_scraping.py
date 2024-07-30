@@ -1,11 +1,12 @@
 import time
 
+import pandas as pd
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-hospital_info_dict = {}
+# hospital_info_dict = {}
 hospitals_list = []
 # driver = Chrome()
 URL = "https://hospitalpricingfiles.org/"
@@ -58,6 +59,8 @@ def get_data(url):
 	parent_elements = driver.find_elements(By.CLASS_NAME, 'search-result-item-wrapper.mobile-search-result-card-style')
 	
 	for parent in parent_elements:
+			# Create a new dictionary for each hospital
+			hospital_info_dict = {}
 			# Find all child elements within the parent element with the specified class
 			hospital_elements = parent.find_elements(By.CLASS_NAME, 'name-hospital-search-result-wrapper')
 			hospital_address_elements = parent.find_elements(By.CLASS_NAME, 'address-hospital-search-result-wrap')
@@ -73,21 +76,27 @@ def get_data(url):
 					hospital_website_elements = other_element.find_elements(By.CLASS_NAME, 'website-search-result')
 					if hospital_ccn_elements:
 						hospital_info_dict['ccn'] = hospital_ccn_elements[0].text
+					else:
+						hospital_info_dict['ccn'] = ''
 					hospital_info_dict['phone_no'] = hospital_phone_elements[0].text
 					hospital_info_dict['website'] = hospital_website_elements[0].get_attribute('href')
      
-			# print(f"Hospital Name: {hospital_info_dict['name']}")
-			# print(f"Hospital Address: {hospital_info_dict['address']}")
-			# print(f"Hospital CCN: {hospital_info_dict['ccn']}")
-			# print(f"Hospital Phone Number: {hospital_info_dict['phone_no']}")
-			# print(f"Hospital Website: {hospital_info_dict['website']}")
+			print(f"Hospital Name: {hospital_info_dict['name']}")
+			print(f"Hospital Address: {hospital_info_dict['address']}")
+			print(f"Hospital CCN: {hospital_info_dict['ccn']}")
+			print(f"Hospital Phone Number: {hospital_info_dict['phone_no']}")
+			print(f"Hospital Website: {hospital_info_dict['website']}")
 			hospitals_list.append(hospital_info_dict)
+			# print(hospitals_list)
 	print(hospitals_list)
 	driver.quit()
+	return hospitals_list
 
 
 def main():
     data = get_data(URL)
+    df = pd.DataFrame(data=data).drop_duplicates()
+    print(df.head())
     
     
 if __name__ == '__main__':
